@@ -19,6 +19,7 @@ HELP_LINES = [
     ("A", "auto-cycle visuals on beats"),
     ("O / SHIFT+O", "open files / open folder"),
     ("L", "playlist"),
+    ("DELETE", "remove current track from playlist"),
     ("F / F11", "fullscreen"),
     ("H", "hide interface"),
     ("X", "VHS effects on / off"),

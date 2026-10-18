@@ -39,6 +39,7 @@ vignette and scanlines. In auto mode the player moves to the next scene on a bea
 | A | auto-cycle visuals |
 | O / Shift+O | open files / folder |
 | L | playlist |
+| Delete | remove the current track from the playlist (the next one starts) |
 | F / F11 | fullscreen |
 | H | hide interface |
 | X | VHS effects on/off |

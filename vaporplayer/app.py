@@ -133,6 +133,10 @@ class App:
             ui.toast(f"VHS effects {'on' if self.fx.enabled else 'off'}")
         elif k in (pygame.K_F1, pygame.K_SLASH, pygame.K_QUESTION):
             ui.show_help = not ui.show_help
+        elif k == pygame.K_DELETE:
+            removed = p.remove_current()
+            if removed is not None:
+                ui.toast(f"removed {removed.title}")
         elif k == pygame.K_ESCAPE:
             if ui.show_help:
                 ui.show_help = False

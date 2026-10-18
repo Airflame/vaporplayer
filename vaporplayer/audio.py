@@ -110,6 +110,22 @@ class Player:
         threading.Thread(target=self._load_worker, args=(self._token, self.playlist[index]),
                          daemon=True).start()
 
+    def remove_current(self) -> Track | None:
+        """Drop the current track from the playlist and start the one that took its place."""
+        if not 0 <= self.index < len(self.playlist):
+            return None
+        removed = self.playlist.pop(self.index)
+        self._halt()
+        self.current = None
+        self.loading = False
+        self._token += 1  # discard a load that may still be in flight
+        if self.playlist:
+            self.play_index(self.index % len(self.playlist))
+        else:
+            self.index = -1
+            self.paused = False
+        return removed
+
     def _load_worker(self, token: int, track: Track):
         try:
             result = load_track(track)
