@@ -150,6 +150,12 @@ class UI:
         self._toast_timer = 0.0
         self._grad_cache: dict = {}
         self._title_cache = ("", None)
+        # draggable windows: offset from each one's default anchor, and stacking order (last = top)
+        self._offsets = {"idle": (0, 0), "main": (0, 0), "list": (0, 0)}
+        self._defaults: dict[str, pygame.Rect] = {}
+        self._window_order = ["idle", "main", "list"]
+        self._drag_win: tuple[str, int, int] | None = None  # (window, grab x, grab y)
+        self._size = (1280, 720)
         self.buttons = [
             Button("prev", icon="prev"), Button("play", icon="play"), Button("next", icon="next"),
             Button("stop", icon="stop"),
@@ -172,6 +178,7 @@ class UI:
         self.show_playlist = not self.show_playlist
         if self.show_playlist:
             self._list_scroll = max(0, self.player.index - 3)
+            self._raise("list")
 
     @property
     def interactive(self) -> bool:
@@ -179,9 +186,11 @@ class UI:
 
     # ------------------------------------------------------------------ layout
     def layout(self, size):
+        self._size = size
         w, h = size
-        x, y = 16, h - self.WIN_H - 16
-        self.win = pygame.Rect(x, y, self.WIN_W, self.WIN_H)
+        screen = pygame.Rect(0, 0, w, h)
+        self.win = self._place("main", pygame.Rect(16, h - self.WIN_H - 16, self.WIN_W, self.WIN_H), screen)
+        x, y = self.win.topleft
         self.close_btn = pygame.Rect(self.win.right - 21, y + 6, 16, 14)
         self.min_btn = pygame.Rect(self.win.right - 39, y + 6, 16, 14)
         self.lcd = pygame.Rect(x + 10, y + 32, self.WIN_W - 20, 62)
@@ -195,8 +204,44 @@ class UI:
         self.vol_rect = pygame.Rect(x + 52, by + 28 + 15, 160, 10)
 
         rows = max(3, min(len(self.player.playlist), (h - self.WIN_H - 120) // 20))
-        self.list_win = pygame.Rect(w - 376, 16, 360, 36 + rows * 20)
+        self.list_win = self._place("list", pygame.Rect(w - 376, 16, 360, 36 + rows * 20), screen)
         self.list_rows = rows
+
+        idle = pygame.Rect(0, 0, 520, 190)
+        idle.center = (w // 2, int(h * 0.42))
+        self.idle_win = self._place("idle", idle, screen)
+
+    def _place(self, name: str, default: pygame.Rect, screen: pygame.Rect) -> pygame.Rect:
+        """Apply the window's drag offset to its default rect, keeping it on screen."""
+        self._defaults[name] = default
+        rect = default.move(self._offsets[name]).clamp(screen)
+        self._offsets[name] = (rect.x - default.x, rect.y - default.y)
+        return rect
+
+    def _window_rect(self, name: str) -> pygame.Rect:
+        return {"idle": self.idle_win, "main": self.win, "list": self.list_win}[name]
+
+    def _window_shown(self, name: str) -> bool:
+        if name == "idle":
+            return not self.player.playlist
+        if name == "list":
+            return self.show_playlist
+        return True
+
+    def _window_at(self, pos) -> str | None:
+        """The topmost visible window under `pos`."""
+        for name in reversed(self._window_order):
+            if self._window_shown(name) and self._window_rect(name).collidepoint(pos):
+                return name
+        return None
+
+    def _raise(self, name: str):
+        self._window_order.remove(name)
+        self._window_order.append(name)
+
+    @staticmethod
+    def _title_bar(rect: pygame.Rect) -> pygame.Rect:
+        return pygame.Rect(rect.x + 3, rect.y + 3, rect.w - 6, 20)
 
     # ------------------------------------------------------------------ events
     def handle_event(self, ev) -> bool:
@@ -204,6 +249,12 @@ class UI:
         if ev.type == pygame.MOUSEMOTION:
             self._idle = 0.0
             self._mouse = ev.pos
+            if self._drag_win:
+                name, gx, gy = self._drag_win
+                default = self._defaults[name]
+                self._offsets[name] = (ev.pos[0] - gx - default.x, ev.pos[1] - gy - default.y)
+                self.layout(self._size)
+                return True
             if self._drag_vol:
                 self._set_volume_from(ev.pos[0])
             elif self._drag_seek:
@@ -216,13 +267,12 @@ class UI:
             return False
 
         if ev.type == pygame.MOUSEWHEEL:
-            if self.show_playlist and self.list_win.collidepoint(self._mouse):
+            hit = self._window_at(self._mouse)
+            if hit == "list":
                 self._scroll_list(-ev.y * 2)
-                return True
-            if self.win.collidepoint(self._mouse):
+            elif hit == "main":
                 self.player.set_volume(self.player.volume + ev.y * 0.05)
-                return True
-            return False
+            return hit is not None
 
         if ev.button != 1:
             return False
@@ -230,6 +280,24 @@ class UI:
         if ev.type == pygame.MOUSEBUTTONDOWN:
             if self.show_help:
                 self.show_help = False
+                return True
+            hit = self._window_at(pos)
+            if hit is None:
+                return False
+            self._raise(hit)
+            rect = self._window_rect(hit)
+            on_caption_button = hit == "main" and (self.close_btn.collidepoint(pos) or self.min_btn.collidepoint(pos))
+            if self._title_bar(rect).collidepoint(pos) and not on_caption_button:
+                self._drag_win = (hit, pos[0] - rect.x, pos[1] - rect.y)
+                return True
+            if hit == "list":
+                row = (pos[1] - self.list_win.y - 30) // 20
+                if 0 <= row < self.list_rows:
+                    i = self._list_scroll + row
+                    if i < len(self.player.playlist):
+                        self.player.play_index(i)
+                return True
+            if hit == "idle":
                 return True
             if self.close_btn.collidepoint(pos):
                 self.actions["quit"]()
@@ -250,17 +318,13 @@ class UI:
                 self._drag_vol = True
                 self._set_volume_from(pos[0])
                 return True
-            if self.show_playlist and self.list_win.collidepoint(pos):
-                row = (pos[1] - self.list_win.y - 30) // 20
-                if 0 <= row < self.list_rows:
-                    i = self._list_scroll + row
-                    if i < len(self.player.playlist):
-                        self.player.play_index(i)
-                return True
-            return self.win.collidepoint(pos)
+            return True
 
         # MOUSEBUTTONUP
         consumed = False
+        if self._drag_win is not None:
+            self._drag_win = None
+            consumed = True
         if self._pressed is not None:
             if self._pressed.rect.collidepoint(pos):
                 self._fire(self._pressed.action)
@@ -303,7 +367,7 @@ class UI:
     def _window(self, surf, rect, title):
         surf.fill(BODY, rect)
         bevel(surf, rect)
-        bar = pygame.Rect(rect.x + 3, rect.y + 3, rect.w - 6, 20)
+        bar = self._title_bar(rect)
         surf.blit(self._gradient(bar.size, [PINK, (185, 103, 255), CYAN]), bar)
         f = self.fonts.caption
         surf.blit(f.render(title, True, (40, 0, 60)), (bar.x + 7, bar.y + 3))
@@ -322,10 +386,9 @@ class UI:
 
     def _update_visibility(self, dt):
         self._idle += dt
-        hovering = self.win.collidepoint(self._mouse) or (
-            self.show_playlist and self.list_win.collidepoint(self._mouse))
+        hovering = self._window_at(self._mouse) is not None
         wanted = (not self.player.playlist or self.show_help or self._drag_seek or self._drag_vol
-                  or hovering or self._idle < 3.0 or not self.player.playing)
+                  or self._drag_win is not None or hovering or self._idle < 3.0 or not self.player.playing)
         target = 255.0 if (self.visible and wanted) else 0.0
         self._alpha += (target - self._alpha) * (1.0 - math.exp(-dt * (10.0 if target else 3.0)))
         pygame.mouse.set_visible(self._idle < 3.0 or self._alpha > 10 or not self.fullscreen)
@@ -344,11 +407,15 @@ class UI:
             return
         ov = self.overlay
         ov.fill((0, 0, 0, 0))
-        if not self.player.playlist:
-            self._draw_idle(ov)
-        self._draw_main(ov, f)
-        if self.show_playlist:
-            self._draw_playlist(ov)
+        for name in self._window_order:
+            if not self._window_shown(name):
+                continue
+            if name == "idle":
+                self._draw_idle(ov)
+            elif name == "main":
+                self._draw_main(ov, f)
+            else:
+                self._draw_playlist(ov)
         if self.show_help:
             self._draw_help(ov)
         ov.set_alpha(int(self._alpha))
@@ -474,10 +541,8 @@ class UI:
         surf.set_clip(None)
 
     def _draw_idle(self, surf):
-        w, h = surf.get_size()
         fonts = self.fonts
-        r = pygame.Rect(0, 0, 520, 190)
-        r.center = (w // 2, int(h * 0.42))
+        r = self.idle_win
         self._window(surf, r, "INSERT_DISK.EXE")
         head = fullwidth("DROP MUSIC HERE") if fonts.wide else "DROP MUSIC HERE"
         big = fonts.big.render(head, True, PINK)

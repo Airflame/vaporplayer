@@ -45,7 +45,8 @@ vignette and scanlines. In auto mode the player moves to the next scene on a bea
 | X | VHS effects on/off |
 | F1 | help |
 
-While music plays, the interface fades out after a few seconds without mouse movement.
+You can drag the player, playlist and "insert disk" windows by their title bars; clicking a window
+brings it to the front. While music plays, the interface fades out after a few seconds without mouse movement.
 
 ## Layout
 
