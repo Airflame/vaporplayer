@@ -28,7 +28,7 @@ def ask_paths(folder: bool = False) -> list[str]:
         if folder:
             chosen = filedialog.askdirectory(title="Choose a music folder")
             return [chosen] if chosen else []
-        pattern = " ".join(f"*{e}" for e in sorted(AUDIO_EXTENSIONS))
+        pattern = " ".join(f"*{extension}" for extension in sorted(AUDIO_EXTENSIONS))
         return list(filedialog.askopenfilenames(title="Choose music",
                                                 filetypes=[("Audio", pattern), ("All files", "*.*")]))
     finally:
@@ -42,7 +42,7 @@ def make_icon() -> pygame.Surface:
         dx = int((max(0, 15.5 ** 2 - (y - 15.5) ** 2)) ** 0.5)
         if y > 16 and y % 4 == 0:
             continue  # sun stripes
-        pygame.draw.line(icon, tuple(int(c) for c in rows[y]), (16 - dx, y), (15 + dx, y))
+        pygame.draw.line(icon, tuple(int(channel) for channel in rows[y]), (16 - dx, y), (15 + dx, y))
     pygame.draw.line(icon, CYAN, (0, 31), (31, 31), 2)
     return icon
 
@@ -98,46 +98,46 @@ class App:
         self.ui.fullscreen = self.fullscreen
 
     def on_key(self, ev):
-        k, shift = ev.key, ev.mod & pygame.KMOD_SHIFT
-        p, v, ui = self.player, self.visuals, self.ui
-        if k == pygame.K_SPACE:
-            p.toggle_pause()
-        elif k in (pygame.K_LEFT, pygame.K_RIGHT):
+        key, shift = ev.key, ev.mod & pygame.KMOD_SHIFT
+        player, visuals, ui = self.player, self.visuals, self.ui
+        if key == pygame.K_SPACE:
+            player.toggle_pause()
+        elif key in (pygame.K_LEFT, pygame.K_RIGHT):
             step = 30 if shift else 5
-            p.seek(p.position + (step if k == pygame.K_RIGHT else -step))
-        elif k in (pygame.K_UP, pygame.K_DOWN):
-            p.set_volume(p.volume + (0.05 if k == pygame.K_UP else -0.05))
-            ui.toast(f"volume {int(round(p.volume * 100))}%")
-        elif k == pygame.K_n:
-            p.next()
-        elif k == pygame.K_p:
-            p.previous()
-        elif k == pygame.K_s:
-            p.stop()
-        elif k in (pygame.K_v, pygame.K_TAB):
-            v.previous() if shift else v.next()
-        elif pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(v.scenes):
-            v.select(k - pygame.K_1)
-        elif k == pygame.K_a:
+            player.seek(player.position + (step if key == pygame.K_RIGHT else -step))
+        elif key in (pygame.K_UP, pygame.K_DOWN):
+            player.set_volume(player.volume + (0.05 if key == pygame.K_UP else -0.05))
+            ui.toast(f"volume {int(round(player.volume * 100))}%")
+        elif key == pygame.K_n:
+            player.next()
+        elif key == pygame.K_p:
+            player.previous()
+        elif key == pygame.K_s:
+            player.stop()
+        elif key in (pygame.K_v, pygame.K_TAB):
+            visuals.previous() if shift else visuals.next()
+        elif pygame.K_1 <= key <= pygame.K_9 and key - pygame.K_1 < len(visuals.scenes):
+            visuals.select(key - pygame.K_1)
+        elif key == pygame.K_a:
             self.toggle_auto()
-        elif k == pygame.K_o:
+        elif key == pygame.K_o:
             self.open_files(folder=bool(shift))
-        elif k == pygame.K_l:
+        elif key == pygame.K_l:
             ui.toggle_playlist()
-        elif k in (pygame.K_f, pygame.K_F11):
+        elif key in (pygame.K_f, pygame.K_F11):
             self.toggle_fullscreen()
-        elif k == pygame.K_h:
+        elif key == pygame.K_h:
             ui.visible = not ui.visible
-        elif k == pygame.K_x:
+        elif key == pygame.K_x:
             self.fx.enabled = not self.fx.enabled
             ui.toast(f"VHS effects {'on' if self.fx.enabled else 'off'}")
-        elif k in (pygame.K_F1, pygame.K_SLASH, pygame.K_QUESTION):
+        elif key in (pygame.K_F1, pygame.K_SLASH, pygame.K_QUESTION):
             ui.show_help = not ui.show_help
-        elif k == pygame.K_DELETE:
-            removed = p.remove_current()
+        elif key == pygame.K_DELETE:
+            removed = player.remove_current()
             if removed is not None:
                 ui.toast(f"removed {removed.title}")
-        elif k == pygame.K_ESCAPE:
+        elif key == pygame.K_ESCAPE:
             if ui.show_help:
                 ui.show_help = False
             elif self.fullscreen:

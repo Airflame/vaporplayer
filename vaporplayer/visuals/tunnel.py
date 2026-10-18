@@ -28,22 +28,22 @@ class Tunnel(Scene):
         self._glow = make_glow(min(size) * 0.6, (170, 60, 255))
 
     @staticmethod
-    def _curve(wz: float, t: float):
-        return (math.sin(wz * 0.13 + t * 0.21) * 1.3 + math.sin(wz * 0.05) * 0.8,
-                math.cos(wz * 0.10 + t * 0.17) * 0.9)
+    def _curve(world_z: float, now: float):
+        return (math.sin(world_z * 0.13 + now * 0.21) * 1.3 + math.sin(world_z * 0.05) * 0.8,
+                math.cos(world_z * 0.10 + now * 0.17) * 0.9)
 
-    def draw(self, surf, f, dt):
-        w, h = self.size
-        t = f.time
-        self._travel += dt * (2.0 + 9.0 * f.energy + 6.0 * f.beat_pulse)
-        self._twist += dt * (0.2 + 0.8 * f.mid)
+    def draw(self, surf, features, dt):
+        width, height = self.size
+        now = features.time
+        self._travel += dt * (2.0 + 9.0 * features.energy + 6.0 * features.beat_pulse)
+        self._twist += dt * (0.2 + 0.8 * features.mid)
         surf.blit(self._fade, (0, 0))
 
-        fov = min(w, h) * 0.55
-        cam_x, cam_y = self._curve(self._travel, t)
+        fov = min(width, height) * 0.55
+        cam_x, cam_y = self._curve(self._travel, now)
         frac = self._travel % 1.0
         base_id = int(self._travel)
-        nb = len(f.bands)
+        nb = len(features.bands)
 
         rings = []
         for k in range(RINGS, 0, -1):  # far to near
@@ -51,32 +51,32 @@ class Tunnel(Scene):
             if z < 0.25:
                 continue
             rid = base_id + k
-            ox, oy = self._curve(self._travel + z, t)
+            ox, oy = self._curve(self._travel + z, now)
             scale = fov / z
-            cx = w / 2 + (ox - cam_x) * scale
-            cy = h / 2 + (oy - cam_y) * scale
+            cx = width / 2 + (ox - cam_x) * scale
+            cy = height / 2 + (oy - cam_y) * scale
             rot = self._twist + rid * 0.07
             pts = []
             for j in range(SIDES):
-                rad = (1.0 + 0.55 * f.bands[(j * 5 + rid * 3) % nb]) * scale
+                rad = (1.0 + 0.55 * features.bands[(j * 5 + rid * 3) % nb]) * scale
                 ang = rot + j * math.tau / SIDES
                 pts.append((cx + math.cos(ang) * rad, cy + math.sin(ang) * rad))
             depth = clamp01(1.0 - z / RINGS)
-            col = scale_color(cycle_color(rid * 0.04 + t * 0.05), depth ** 1.2 * (0.6 + 0.7 * f.energy))
-            if f.beat_pulse > 0.3 and rid % 4 == 0:
-                col = lerp_color(col, WHITE, f.beat_pulse * depth)
+            col = scale_color(cycle_color(rid * 0.04 + now * 0.05), depth ** 1.2 * (0.6 + 0.7 * features.energy))
+            if features.beat_pulse > 0.3 and rid % 4 == 0:
+                col = lerp_color(col, WHITE, features.beat_pulse * depth)
             rings.append((pts, col, z, cx, cy))
 
         far = rings[0]
         glow = self._glow.copy()
-        k = int(255 * clamp01(0.25 + 0.6 * f.bass + 0.3 * f.beat_pulse))
-        glow.fill((k, k, k), special_flags=pygame.BLEND_RGB_MULT)
+        glow_level = int(255 * clamp01(0.25 + 0.6 * features.bass + 0.3 * features.beat_pulse))
+        glow.fill((glow_level, glow_level, glow_level), special_flags=pygame.BLEND_RGB_MULT)
         surf.blit(glow, glow.get_rect(center=(far[3], far[4])), special_flags=pygame.BLEND_RGB_ADD)
 
         prev = None
         for pts, col, z, _, _ in rings:
-            width = max(1, min(5, int(2.5 / z) + 1))
-            pygame.draw.polygon(surf, col, pts, width)
+            line_width = max(1, min(5, int(2.5 / z) + 1))
+            pygame.draw.polygon(surf, col, pts, line_width)
             if prev is not None:
                 dim = scale_color(col, 0.6)
                 for j in range(0, SIDES, 2):

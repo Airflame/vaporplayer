@@ -17,12 +17,12 @@ AUDIO_EXTENSIONS = {".mp3", ".ogg", ".wav", ".flac"}
 def collect_audio_files(paths) -> list[Path]:
     """Expand files and folders (recursively) into a sorted list of audio files."""
     found: list[Path] = []
-    for p in paths:
-        p = Path(p)
-        if p.is_dir():
-            found.extend(sorted(f for f in p.rglob("*") if f.suffix.lower() in AUDIO_EXTENSIONS))
-        elif p.is_file() and p.suffix.lower() in AUDIO_EXTENSIONS:
-            found.append(p)
+    for path in paths:
+        path = Path(path)
+        if path.is_dir():
+            found.extend(sorted(file for file in path.rglob("*") if file.suffix.lower() in AUDIO_EXTENSIONS))
+        elif path.is_file() and path.suffix.lower() in AUDIO_EXTENSIONS:
+            found.append(path)
     return found
 
 
@@ -88,7 +88,7 @@ class Player:
     def add(self, paths) -> int:
         files = collect_audio_files(paths)
         first_new = len(self.playlist)
-        self.playlist.extend(Track(f) for f in files)
+        self.playlist.extend(Track(file) for file in files)
         if files and self.current is None and not self.loading:
             self.play_index(first_new)
         return len(files)
@@ -283,11 +283,11 @@ class Analyzer:
         self.clock = 0.0
 
     def _analyze(self, lt: LoadedTrack, pos: int, dt: float):
-        n = self.FFT_SIZE
-        seg = lt.mono[max(0, pos - n):pos]
-        if len(seg) < n:
-            seg = np.pad(seg, (n - len(seg), 0))
-        spec = np.abs(np.fft.rfft(seg * self._window)) / (n / 4)
+        fft_size = self.FFT_SIZE
+        seg = lt.mono[max(0, pos - fft_size):pos]
+        if len(seg) < fft_size:
+            seg = np.pad(seg, (fft_size - len(seg), 0))
+        spec = np.abs(np.fft.rfft(seg * self._window)) / (fft_size / 4)
         mags = np.maximum.reduceat(spec[:self._edges[-1]], self._edges[:-1])
         db = 20.0 * np.log10(mags + 1e-7) + self._tilt
         level = np.clip((db + 62.0) / 56.0, 0.0, 1.0)
@@ -295,29 +295,29 @@ class Analyzer:
         self._agc = max(float(level.max()), self._agc - dt * 0.04, 0.35)
         raw = np.clip(level / self._agc, 0.0, 1.0) ** 1.4
 
-        w = lt.samples[max(0, pos - 1024):pos]
-        if len(w) < 16:
+        recent = lt.samples[max(0, pos - 1024):pos]
+        if len(recent) < 16:
             zero = np.zeros(self.WAVE_POINTS, np.float32)
             return raw, zero, zero
-        w = w.astype(np.float32) / lt.scale
-        if w.ndim == 1:
-            left = right = w
+        recent = recent.astype(np.float32) / lt.scale
+        if recent.ndim == 1:
+            left = right = recent
         else:
-            left, right = w[:, 0], w[:, -1]
+            left, right = recent[:, 0], recent[:, -1]
         pick = np.linspace(0, len(left) - 1, self.WAVE_POINTS).astype(int)
         return raw, np.clip(left[pick] * 1.3, -1, 1), np.clip(right[pick] * 1.3, -1, 1)
 
     def _demo(self):
         """A gentle synthetic signal so the visuals keep dreaming with no music."""
-        t = self.clock
-        x = np.linspace(0.0, 1.0, self.n_bands, dtype=np.float32)
-        kick = math.exp(-((t * 1.6) % 1.0) * 7.0)
-        raw = 0.25 + 0.18 * np.sin(t * 0.9 + x * 7) + 0.12 * np.sin(t * 2.3 - x * 13)
-        raw *= 1.0 - 0.5 * x
+        now = self.clock
+        band_pos = np.linspace(0.0, 1.0, self.n_bands, dtype=np.float32)
+        kick = math.exp(-((now * 1.6) % 1.0) * 7.0)
+        raw = 0.25 + 0.18 * np.sin(now * 0.9 + band_pos * 7) + 0.12 * np.sin(now * 2.3 - band_pos * 13)
+        raw *= 1.0 - 0.5 * band_pos
         raw[:10] += 0.45 * kick
         ph = np.linspace(0, math.tau * 3, self.WAVE_POINTS, dtype=np.float32)
-        left = 0.45 * np.sin(ph + t * 2) * (0.5 + 0.5 * kick)
-        right = 0.45 * np.cos(ph * 1.5 + t * 1.3) * (0.5 + 0.5 * kick)
+        left = 0.45 * np.sin(ph + now * 2) * (0.5 + 0.5 * kick)
+        right = 0.45 * np.cos(ph * 1.5 + now * 1.3) * (0.5 + 0.5 * kick)
         return np.clip(raw * 0.8, 0, 1).astype(np.float32), left, right
 
     def process(self, player: Player, dt: float) -> AudioFeatures:
@@ -335,7 +335,7 @@ class Analyzer:
         attack = 1.0 - math.exp(-dt * 30.0)
         release = 1.0 - math.exp(-dt * 7.0)
         self.bands += (raw - self.bands) * np.where(raw > self.bands, attack, release)
-        b = self.bands
+        bands = self.bands
 
         raw_bass = float(raw[self._bass_mask].mean())
         avg = sum(self._bass_hist) / len(self._bass_hist) if self._bass_hist else raw_bass
@@ -349,19 +349,19 @@ class Analyzer:
         else:
             self._beat_pulse *= math.exp(-dt * 5.0)
 
-        energy = float(b.mean())
+        energy = float(bands.mean())
         self._intensity += (energy - self._intensity) * (1.0 - math.exp(-dt * 0.8))
-        total = float(b.sum())
+        total = float(bands.sum())
         if total > 1e-4:
             lc = self._log_centres
-            centroid = (float((b * lc).sum()) / total - lc[0]) / (lc[-1] - lc[0])
+            centroid = (float((bands * lc).sum()) / total - lc[0]) / (lc[-1] - lc[0])
         else:
             centroid = 0.5
 
         return AudioFeatures(
-            bands=b.astype(np.float64), wave_left=wl.astype(np.float64), wave_right=wr.astype(np.float64),
-            bass=float(b[self._bass_mask].mean()), mid=float(b[self._mid_mask].mean()),
-            treble=float(b[self._treble_mask].mean()), energy=energy,
+            bands=bands.astype(np.float64), wave_left=wl.astype(np.float64), wave_right=wr.astype(np.float64),
+            bass=float(bands[self._bass_mask].mean()), mid=float(bands[self._mid_mask].mean()),
+            treble=float(bands[self._treble_mask].mean()), energy=energy,
             intensity=self._intensity, centroid=centroid, beat=beat,
             beat_pulse=self._beat_pulse, beat_count=self._beat_count,
             time=self.clock, live=live,

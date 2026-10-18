@@ -45,7 +45,7 @@ class Fonts:
 
 
 def _supports(font: pygame.font.Font, text: str) -> bool:
-    return all(m is not None for m in font.metrics(text))
+    return all(glyph_metrics is not None for glyph_metrics in font.metrics(text))
 
 
 def load_fonts() -> Fonts:
@@ -75,30 +75,30 @@ def fmt_time(sec: float) -> str:
 
 
 def bevel(surf, rect, raised=True):
-    r = pygame.Rect(rect)
+    box = pygame.Rect(rect)
     tl, br = (LIGHT, SHADOW) if raised else (SHADOW, LIGHT)
-    pygame.draw.line(surf, tl, r.topleft, (r.right - 1, r.top))
-    pygame.draw.line(surf, tl, r.topleft, (r.left, r.bottom - 1))
-    pygame.draw.line(surf, br, (r.left, r.bottom - 1), (r.right - 1, r.bottom - 1))
-    pygame.draw.line(surf, br, (r.right - 1, r.top), (r.right - 1, r.bottom - 1))
+    pygame.draw.line(surf, tl, box.topleft, (box.right - 1, box.top))
+    pygame.draw.line(surf, tl, box.topleft, (box.left, box.bottom - 1))
+    pygame.draw.line(surf, br, (box.left, box.bottom - 1), (box.right - 1, box.bottom - 1))
+    pygame.draw.line(surf, br, (box.right - 1, box.top), (box.right - 1, box.bottom - 1))
 
 
 def draw_icon(surf, kind: str, rect, color):
     cx, cy = rect.center
-    s = 7
+    half = 7
     if kind == "play":
-        pygame.draw.polygon(surf, color, [(cx - s + 2, cy - s), (cx - s + 2, cy + s), (cx + s, cy)])
+        pygame.draw.polygon(surf, color, [(cx - half + 2, cy - half), (cx - half + 2, cy + half), (cx + half, cy)])
     elif kind == "pause":
-        pygame.draw.rect(surf, color, (cx - 6, cy - s, 4, 2 * s))
-        pygame.draw.rect(surf, color, (cx + 2, cy - s, 4, 2 * s))
+        pygame.draw.rect(surf, color, (cx - 6, cy - half, 4, 2 * half))
+        pygame.draw.rect(surf, color, (cx + 2, cy - half, 4, 2 * half))
     elif kind == "stop":
-        pygame.draw.rect(surf, color, (cx - s + 1, cy - s + 1, 2 * s - 2, 2 * s - 2))
+        pygame.draw.rect(surf, color, (cx - half + 1, cy - half + 1, 2 * half - 2, 2 * half - 2))
     elif kind == "prev":
-        pygame.draw.rect(surf, color, (cx - s, cy - s, 3, 2 * s))
-        pygame.draw.polygon(surf, color, [(cx + s, cy - s), (cx + s, cy + s), (cx - s + 3, cy)])
+        pygame.draw.rect(surf, color, (cx - half, cy - half, 3, 2 * half))
+        pygame.draw.polygon(surf, color, [(cx + half, cy - half), (cx + half, cy + half), (cx - half + 3, cy)])
     elif kind == "next":
-        pygame.draw.rect(surf, color, (cx + s - 3, cy - s, 3, 2 * s))
-        pygame.draw.polygon(surf, color, [(cx - s, cy - s), (cx - s, cy + s), (cx + s - 3, cy)])
+        pygame.draw.rect(surf, color, (cx + half - 3, cy - half, 3, 2 * half))
+        pygame.draw.polygon(surf, color, [(cx - half, cy - half), (cx - half, cy + half), (cx + half - 3, cy)])
 
 
 class Button:
@@ -187,28 +187,28 @@ class UI:
     # ------------------------------------------------------------------ layout
     def layout(self, size):
         self._size = size
-        w, h = size
-        screen = pygame.Rect(0, 0, w, h)
-        self.win = self._place("main", pygame.Rect(16, h - self.WIN_H - 16, self.WIN_W, self.WIN_H), screen)
+        width, height = size
+        screen = pygame.Rect(0, 0, width, height)
+        self.win = self._place("main", pygame.Rect(16, height - self.WIN_H - 16, self.WIN_W, self.WIN_H), screen)
         x, y = self.win.topleft
         self.close_btn = pygame.Rect(self.win.right - 21, y + 6, 16, 14)
         self.min_btn = pygame.Rect(self.win.right - 39, y + 6, 16, 14)
         self.lcd = pygame.Rect(x + 10, y + 32, self.WIN_W - 20, 62)
         self.progress = pygame.Rect(x + 10, self.lcd.bottom + 10, self.WIN_W - 20, 14)
         bx, by = x + 10, self.progress.bottom + 10
-        for i, b in enumerate(self.buttons):
+        for i, button in enumerate(self.buttons):
             if i == 4:
                 bx += 12
-            b.rect = pygame.Rect(bx, by, b.width, 28)
-            bx += b.width + 4
+            button.rect = pygame.Rect(bx, by, button.width, 28)
+            bx += button.width + 4
         self.vol_rect = pygame.Rect(x + 52, by + 28 + 15, 160, 10)
 
-        rows = max(3, min(len(self.player.playlist), (h - self.WIN_H - 120) // 20))
-        self.list_win = self._place("list", pygame.Rect(w - 376, 16, 360, 36 + rows * 20), screen)
+        rows = max(3, min(len(self.player.playlist), (height - self.WIN_H - 120) // 20))
+        self.list_win = self._place("list", pygame.Rect(width - 376, 16, 360, 36 + rows * 20), screen)
         self.list_rows = rows
 
         idle = pygame.Rect(0, 0, 520, 190)
-        idle.center = (w // 2, int(h * 0.42))
+        idle.center = (width // 2, int(height * 0.42))
         self.idle_win = self._place("idle", idle, screen)
 
     def _place(self, name: str, default: pygame.Rect, screen: pygame.Rect) -> pygame.Rect:
@@ -293,9 +293,9 @@ class UI:
             if hit == "list":
                 row = (pos[1] - self.list_win.y - 30) // 20
                 if 0 <= row < self.list_rows:
-                    i = self._list_scroll + row
-                    if i < len(self.player.playlist):
-                        self.player.play_index(i)
+                    track_index = self._list_scroll + row
+                    if track_index < len(self.player.playlist):
+                        self.player.play_index(track_index)
                 return True
             if hit == "idle":
                 return True
@@ -306,9 +306,9 @@ class UI:
                 self.visible = False
                 self.toast("H  brings the interface back")
                 return True
-            for b in self.buttons:
-                if b.rect.collidepoint(pos):
-                    self._pressed = b
+            for button in self.buttons:
+                if button.rect.collidepoint(pos):
+                    self._pressed = button
                     return True
             if self.progress.inflate(0, 8).collidepoint(pos) and self.player.current:
                 self._drag_seek = True
@@ -340,10 +340,10 @@ class UI:
         return consumed
 
     def _fire(self, action: str):
-        p, v = self.player, self.visuals
+        player, visuals = self.player, self.visuals
         {
-            "prev": p.previous, "play": p.toggle_pause, "next": p.next, "stop": p.stop,
-            "open": self.actions["open"], "list": self.toggle_playlist, "vis": v.next,
+            "prev": player.previous, "play": player.toggle_pause, "next": player.next, "stop": player.stop,
+            "open": self.actions["open"], "list": self.toggle_playlist, "vis": visuals.next,
             "auto": self.actions["auto"],
         }[action]()
 
@@ -369,20 +369,20 @@ class UI:
         bevel(surf, rect)
         bar = self._title_bar(rect)
         surf.blit(self._gradient(bar.size, [PINK, (185, 103, 255), CYAN]), bar)
-        f = self.fonts.caption
-        surf.blit(f.render(title, True, (40, 0, 60)), (bar.x + 7, bar.y + 3))
-        surf.blit(f.render(title, True, (255, 255, 255)), (bar.x + 6, bar.y + 2))
+        font = self.fonts.caption
+        surf.blit(font.render(title, True, (40, 0, 60)), (bar.x + 7, bar.y + 3))
+        surf.blit(font.render(title, True, (255, 255, 255)), (bar.x + 6, bar.y + 2))
 
     def _caption_buttons(self, surf):
-        for r, glyph in ((self.min_btn, "min"), (self.close_btn, "close")):
-            surf.fill((200, 190, 225, 255), r)
-            bevel(surf, r)
-            c = (30, 10, 50)
+        for box, glyph in ((self.min_btn, "min"), (self.close_btn, "close")):
+            surf.fill((200, 190, 225, 255), box)
+            bevel(surf, box)
+            glyph_color = (30, 10, 50)
             if glyph == "min":
-                pygame.draw.line(surf, c, (r.x + 4, r.bottom - 4), (r.right - 5, r.bottom - 4), 2)
+                pygame.draw.line(surf, glyph_color, (box.x + 4, box.bottom - 4), (box.right - 5, box.bottom - 4), 2)
             else:
-                pygame.draw.line(surf, c, (r.x + 4, r.y + 3), (r.right - 5, r.bottom - 4), 2)
-                pygame.draw.line(surf, c, (r.x + 4, r.bottom - 4), (r.right - 5, r.y + 3), 2)
+                pygame.draw.line(surf, glyph_color, (box.x + 4, box.y + 3), (box.right - 5, box.bottom - 4), 2)
+                pygame.draw.line(surf, glyph_color, (box.x + 4, box.bottom - 4), (box.right - 5, box.y + 3), 2)
 
     def _update_visibility(self, dt):
         self._idle += dt
@@ -393,7 +393,7 @@ class UI:
         self._alpha += (target - self._alpha) * (1.0 - math.exp(-dt * (10.0 if target else 3.0)))
         pygame.mouse.set_visible(self._idle < 3.0 or self._alpha > 10 or not self.fullscreen)
 
-    def draw(self, screen, f, dt):
+    def draw(self, screen, features, dt):
         size = screen.get_size()
         if self.overlay is None or self.overlay.get_size() != size:
             self.overlay = pygame.Surface(size, pygame.SRCALPHA)
@@ -413,7 +413,7 @@ class UI:
             if name == "idle":
                 self._draw_idle(ov)
             elif name == "main":
-                self._draw_main(ov, f)
+                self._draw_main(ov, features)
             else:
                 self._draw_playlist(ov)
         if self.show_help:
@@ -421,8 +421,8 @@ class UI:
         ov.set_alpha(int(self._alpha))
         screen.blit(ov, (0, 0))
 
-    def _draw_main(self, surf, f):
-        p, fonts = self.player, self.fonts
+    def _draw_main(self, surf, features):
+        player, fonts = self.player, self.fonts
         self._window(surf, self.win, fullwidth("VAPORPLAYER.EXE") if fonts.wide else "VAPORPLAYER.EXE")
         self._caption_buttons(surf)
 
@@ -432,10 +432,10 @@ class UI:
         bevel(surf, lcd, raised=False)
         spec_w = 132
         text_area = pygame.Rect(lcd.x + 8, lcd.y + 6, lcd.w - spec_w - 22, 24)
-        if p.current:
-            title = p.current.track.title
-        elif p.loading:
-            title = "loading " + p.playlist[p.index].title + " ..."
+        if player.current:
+            title = player.current.track.title
+        elif player.loading:
+            title = "loading " + player.playlist[player.index].title + " ..."
         else:
             title = "no disk inserted"
         if self._title_cache[0] != title:
@@ -451,13 +451,13 @@ class UI:
             surf.blit(img, text_area.topleft)
         surf.set_clip(None)
 
-        if p.status and not p.current:
-            line, col = p.status, PINK
+        if player.status and not player.current:
+            line, col = player.status, PINK
         else:
-            state = "LOAD" if p.loading else "PLAY" if p.playing else "PAUSE" if p.current else "IDLE"
-            pos = self._seek_preview * p.duration if self._drag_seek else p.position
-            n = len(p.playlist)
-            line = f"{state:<5}  {fmt_time(pos)} / {fmt_time(p.duration)}   [{p.index + 1:02d}/{n:02d}]" if n else state
+            state = "LOAD" if player.loading else "PLAY" if player.playing else "PAUSE" if player.current else "IDLE"
+            pos = self._seek_preview * player.duration if self._drag_seek else player.position
+            track_count = len(player.playlist)
+            line = f"{state:<5}  {fmt_time(pos)} / {fmt_time(player.duration)}   [{player.index + 1:02d}/{track_count:02d}]" if track_count else state
             col = (120, 255, 200)
         surf.set_clip(pygame.Rect(lcd.x + 8, lcd.y + 34, text_area.w, 20))
         surf.blit(fonts.ui.render(line, True, col), (lcd.x + 8, lcd.y + 36))
@@ -466,19 +466,19 @@ class UI:
         bars = 22
         sx = lcd.right - spec_w - 8
         bw = spec_w / bars
-        nb = len(f.bands)
+        nb = len(features.bands)
         for i in range(bars):
-            level = f.bands[int(i * nb / bars)]
+            level = features.bands[int(i * nb / bars)]
             segs = int(level * 10 + 0.5)
             for s in range(segs):
-                c = lerp_color(MINT, PINK, s / 9) + (255,)
-                surf.fill(c, (int(sx + i * bw), lcd.bottom - 8 - s * 5, max(1, int(bw) - 1), 4))
+                led_color = lerp_color(MINT, PINK, s / 9) + (255,)
+                surf.fill(led_color, (int(sx + i * bw), lcd.bottom - 8 - s * 5, max(1, int(bw) - 1), 4))
 
         # progress bar
         pr = self.progress
         surf.fill((10, 2, 20, 230), pr)
         bevel(surf, pr, raised=False)
-        frac = self._seek_preview if self._drag_seek else (p.position / p.duration if p.duration else 0)
+        frac = self._seek_preview if self._drag_seek else (player.position / player.duration if player.duration else 0)
         fill_w = int((pr.w - 4) * clamp01(frac))
         if fill_w > 0:
             grad = self._gradient((pr.w - 4, pr.h - 4), [PINK, (185, 103, 255), CYAN])
@@ -486,19 +486,19 @@ class UI:
             pygame.draw.rect(surf, (255, 255, 255), (pr.x + 2 + fill_w - 2, pr.y + 1, 3, pr.h - 2))
 
         # transport + function buttons
-        for b in self.buttons:
-            icon = b.icon
-            if b.action == "play" and p.playing:
+        for button in self.buttons:
+            icon = button.icon
+            if button.action == "play" and player.playing:
                 icon = "pause"
-            active = (b.action == "auto" and self.visuals.auto) or (b.action == "list" and self.show_playlist)
-            b.draw(surf, fonts, b.rect.collidepoint(self._mouse), b is self._pressed, active, icon)
+            active = (button.action == "auto" and self.visuals.auto) or (button.action == "list" and self.show_playlist)
+            button.draw(surf, fonts, button.rect.collidepoint(self._mouse), button is self._pressed, active, icon)
 
         # volume + current scene
         vr = self.vol_rect
         surf.blit(fonts.bold.render("VOL", True, (240, 225, 255)), (self.win.x + 12, vr.y - 3))
         surf.fill((10, 2, 20, 230), vr)
         bevel(surf, vr, raised=False)
-        vw = int((vr.w - 4) * p.volume)
+        vw = int((vr.w - 4) * player.volume)
         if vw > 0:
             surf.blit(self._gradient((vr.w - 4, vr.h - 4), [MINT, YELLOW, PINK]), (vr.x + 2, vr.y + 2),
                       (0, 0, vw, vr.h - 4))
@@ -512,24 +512,24 @@ class UI:
         surf.blit(img, img.get_rect(midright=(self.win.right - 12, vr.centery)))
 
     def _draw_playlist(self, surf):
-        p, fonts = self.player, self.fonts
-        r = self.list_win
-        self._window(surf, r, "PLAYLIST.TXT")
-        inner = pygame.Rect(r.x + 6, r.y + 28, r.w - 12, r.h - 34)
+        player, fonts = self.player, self.fonts
+        window_rect = self.list_win
+        self._window(surf, window_rect, "PLAYLIST.TXT")
+        inner = pygame.Rect(window_rect.x + 6, window_rect.y + 28, window_rect.w - 12, window_rect.h - 34)
         surf.fill(LCD_BG, inner)
         bevel(surf, inner, raised=False)
-        if not p.playlist:
+        if not player.playlist:
             surf.blit(fonts.ui.render("(empty) - drop files here", True, (150, 130, 180)), (inner.x + 8, inner.y + 6))
             return
         self._scroll_list(0)
         surf.set_clip(inner)
         for row in range(self.list_rows):
-            i = self._list_scroll + row
-            if i >= len(p.playlist):
+            track_index = self._list_scroll + row
+            if track_index >= len(player.playlist):
                 break
             y = inner.y + 2 + row * 20
             rowrect = pygame.Rect(inner.x + 2, y, inner.w - 4, 19)
-            if i == p.index:
+            if track_index == player.index:
                 surf.blit(self._gradient(rowrect.size, [(255, 113, 206), (90, 30, 140)]), rowrect)
                 col = (255, 255, 255)
             elif rowrect.collidepoint(self._mouse):
@@ -537,60 +537,60 @@ class UI:
                 col = (230, 220, 255)
             else:
                 col = (170, 255, 220)
-            surf.blit(fonts.ui.render(f"{i + 1:02d}  {p.playlist[i].title}", True, col), (rowrect.x + 6, y + 2))
+            surf.blit(fonts.ui.render(f"{track_index + 1:02d}  {player.playlist[track_index].title}", True, col), (rowrect.x + 6, y + 2))
         surf.set_clip(None)
 
     def _draw_idle(self, surf):
         fonts = self.fonts
-        r = self.idle_win
-        self._window(surf, r, "INSERT_DISK.EXE")
+        window_rect = self.idle_win
+        self._window(surf, window_rect, "INSERT_DISK.EXE")
         head = fullwidth("DROP MUSIC HERE") if fonts.wide else "DROP MUSIC HERE"
         big = fonts.big.render(head, True, PINK)
-        if big.get_width() > r.w - 30:
-            big = pygame.transform.smoothscale(big, (r.w - 30, int(big.get_height() * (r.w - 30) / big.get_width())))
-        surf.blit(big, big.get_rect(center=(r.centerx, r.y + 70)))
+        if big.get_width() > window_rect.w - 30:
+            big = pygame.transform.smoothscale(big, (window_rect.w - 30, int(big.get_height() * (window_rect.w - 30) / big.get_width())))
+        surf.blit(big, big.get_rect(center=(window_rect.centerx, window_rect.y + 70)))
         lines = ["drag audio files or folders onto this window", "mp3  ogg  flac  wav",
                  "[O] browse files    [SHIFT+O] folder    [F1] help"]
         for i, line in enumerate(lines):
             img = fonts.ui.render(line, True, (220, 210, 255) if i != 1 else CYAN)
-            surf.blit(img, img.get_rect(center=(r.centerx, r.y + 116 + i * 20)))
+            surf.blit(img, img.get_rect(center=(window_rect.centerx, window_rect.y + 116 + i * 20)))
 
     def _draw_help(self, surf):
-        w, h = surf.get_size()
+        width, height = surf.get_size()
         fonts = self.fonts
-        r = pygame.Rect(0, 0, 470, 50 + len(HELP_LINES) * 20)
-        r.center = (w // 2, h // 2)
-        self._window(surf, r, "HELP.TXT")
+        window_rect = pygame.Rect(0, 0, 470, 50 + len(HELP_LINES) * 20)
+        window_rect.center = (width // 2, height // 2)
+        self._window(surf, window_rect, "HELP.TXT")
         for i, (key, desc) in enumerate(HELP_LINES):
-            y = r.y + 34 + i * 20
-            surf.blit(fonts.bold.render(key, True, YELLOW), (r.x + 16, y))
-            surf.blit(fonts.ui.render(desc, True, (230, 220, 255)), (r.x + 150, y))
+            y = window_rect.y + 34 + i * 20
+            surf.blit(fonts.bold.render(key, True, YELLOW), (window_rect.x + 16, y))
+            surf.blit(fonts.ui.render(desc, True, (230, 220, 255)), (window_rect.x + 150, y))
 
     def _draw_title_card(self, screen, dt):
         if self._title_timer <= 0 or self._title_scene is None:
             return
         self._title_timer -= dt
-        a = clamp01(min(self._title_timer / 0.8, (3.0 - self._title_timer) / 0.4))
+        fade = clamp01(min(self._title_timer / 0.8, (3.0 - self._title_timer) / 0.4))
         fonts = self.fonts
-        w, h = screen.get_size()
+        width, height = screen.get_size()
         name = fullwidth(self._title_scene.name) if fonts.wide else self._title_scene.name
         main = fonts.big.render(name, True, (255, 255, 255))
-        if main.get_width() > w - 40:
-            k = (w - 40) / main.get_width()
-            main = pygame.transform.smoothscale(main, (w - 40, int(main.get_height() * k)))
+        if main.get_width() > width - 40:
+            shrink = (width - 40) / main.get_width()
+            main = pygame.transform.smoothscale(main, (width - 40, int(main.get_height() * shrink)))
         cyan = main.copy()
         cyan.fill(CYAN + (255,), special_flags=pygame.BLEND_RGBA_MULT)
         pink = main.copy()
         pink.fill(PINK + (255,), special_flags=pygame.BLEND_RGBA_MULT)
-        cy = int(h * 0.2)
-        rect = main.get_rect(center=(w // 2, cy))
+        cy = int(height * 0.2)
+        rect = main.get_rect(center=(width // 2, cy))
         for img, off in ((cyan, (-3, 0)), (pink, (3, 2)), (main, (0, 0))):
-            img.set_alpha(int(255 * a))
+            img.set_alpha(int(255 * fade))
             screen.blit(img, rect.move(off))
         if fonts.jp and self._title_scene.tagline:
             sub = fonts.jp.render(self._title_scene.tagline, True, YELLOW)
-            sub.set_alpha(int(220 * a))
-            screen.blit(sub, sub.get_rect(center=(w // 2, rect.bottom + 18)))
+            sub.set_alpha(int(220 * fade))
+            screen.blit(sub, sub.get_rect(center=(width // 2, rect.bottom + 18)))
 
     def _draw_toast(self, screen, dt):
         if self._toast_timer <= 0:
@@ -598,9 +598,9 @@ class UI:
         self._toast_timer -= dt
         img = self.fonts.bold.render(self._toast, True, MINT)
         img.set_alpha(int(255 * clamp01(self._toast_timer / 0.5)))
-        w, _ = screen.get_size()
+        width, _ = screen.get_size()
         bg = pygame.Surface((img.get_width() + 20, img.get_height() + 10), pygame.SRCALPHA)
         bg.fill((10, 2, 24, int(200 * clamp01(self._toast_timer / 0.5))))
-        r = bg.get_rect(midtop=(w // 2, 16))
-        screen.blit(bg, r)
-        screen.blit(img, img.get_rect(center=r.center))
+        toast_rect = bg.get_rect(midtop=(width // 2, 16))
+        screen.blit(bg, toast_rect)
+        screen.blit(img, img.get_rect(center=toast_rect.center))

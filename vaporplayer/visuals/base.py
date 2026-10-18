@@ -15,12 +15,12 @@ class Scene:
     def resize(self, size):
         """Rebuild size-dependent resources."""
 
-    def render(self, surf: pygame.Surface, f: AudioFeatures, dt: float):
+    def render(self, surf: pygame.Surface, features: AudioFeatures, dt: float):
         size = surf.get_size()
         if size != self.size:
             self.size = size
             self.resize(size)
-        self.draw(surf, f, dt)
+        self.draw(surf, features, dt)
 
-    def draw(self, surf: pygame.Surface, f: AudioFeatures, dt: float):
+    def draw(self, surf: pygame.Surface, features: AudioFeatures, dt: float):
         raise NotImplementedError

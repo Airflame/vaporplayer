@@ -47,22 +47,22 @@ class VisualEngine:
     def previous(self):
         self.select(self.index - 1)
 
-    def _layer(self, i: int, size) -> pygame.Surface:
-        layer = self._layers.get(i)
+    def _layer(self, scene_index: int, size) -> pygame.Surface:
+        layer = self._layers.get(scene_index)
         if layer is None or layer.get_size() != size:
             layer = pygame.Surface(size)
             layer.fill(NIGHT)
-            self._layers[i] = layer
+            self._layers[scene_index] = layer
         return layer
 
-    def render(self, screen: pygame.Surface, f, dt: float):
+    def render(self, screen: pygame.Surface, features, dt: float):
         size = screen.get_size()
         self._since += dt
-        if self.auto and self._since > self.AUTO_INTERVAL and f.beat:
+        if self.auto and self._since > self.AUTO_INTERVAL and features.beat:
             self.next()
 
         layer = self._layer(self.index, size)
-        self.current.render(layer, f, dt)
+        self.current.render(layer, features, dt)
         screen.blit(layer, (0, 0))
 
         if self._prev is not None:
@@ -71,7 +71,7 @@ class VisualEngine:
                 self._prev = None
             else:
                 old = self._layer(self._prev, size)
-                self.scenes[self._prev].render(old, f, dt)
+                self.scenes[self._prev].render(old, features, dt)
                 old.set_alpha(int(255 * smoothstep(self._fade)))
                 screen.blit(old, (0, 0))
                 old.set_alpha(None)
