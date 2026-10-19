@@ -4,6 +4,7 @@ from __future__ import annotations
 import pygame
 
 from ..palette import NIGHT, smoothstep
+from .dreampunk import Dreampunk
 from .feedback import LiquidMemory
 from .kaleido import Kaleidoscope
 from .postfx import PostFX
@@ -18,7 +19,7 @@ class VisualEngine:
     FADE_TIME = 1.4
 
     def __init__(self):
-        self.scenes = [SunsetGrid(), Kaleidoscope(), Tunnel(), LiquidMemory()]
+        self.scenes = [SunsetGrid(), Kaleidoscope(), Tunnel(), LiquidMemory(), Dreampunk()]
         self.index = 0
         self.auto = True
         self.on_switch = None

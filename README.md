@@ -15,12 +15,13 @@ Plays mp3, ogg, flac and wav.
 Every scene is driven by a live FFT of the exact samples being played. That gives a 48-band
 log spectrum, bass/mid/treble energy, spectral brightness and beat detection.
 
-| # | Scene | What reacts |
-|---|-------|-------------|
-| 1 | **OUTRUN SUNSET** | sun pulses with bass, mountains are the spectrum, grid speed follows energy, stars twinkle with treble |
-| 2 | **DREAM KALEIDOSCOPE** | mirrored plasma warps with bass/mids, beats send out light rings, segment count shifts every 32 beats |
-| 3 | **CYBER TUNNEL** | curving wireframe tunnel, rings bulge per band, flight speed follows energy |
-| 4 | **LIQUID MEMORY** | Milkdrop-style feedback: waveform halo, stereo goniometer, a breathing wire globe, beat shockwaves |
+| # | Scene | What reacts                                                                                                                                                                                                                                                                    |
+|---|-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | **OUTRUN SUNSET** | sun pulses with bass, mountains are the spectrum, grid speed follows energy, stars twinkle with treble                                                                                                                                                                         |
+| 2 | **DREAM KALEIDOSCOPE** | mirrored plasma warps with bass/mids, beats send out light rings, segment count shifts every 32 beats                                                                                                                                                                          |
+| 3 | **CYBER TUNNEL** | curving wireframe tunnel, rings bulge per band, flight speed follows energy                                                                                                                                                                                                    |
+| 4 | **LIQUID MEMORY** | Milkdrop-style feedback: waveform halo, stereo goniometer, a breathing wire globe, beat shockwaves                                                                                                                                                                             |
+| 5 | **DREAMPUNK** | rain-drenched neon city: neon colour follows the music's intensity (cold blue when calm, through violet and magenta, to hot pink and amber at peaks), signs pulse with their own band, rain and puddle ripples get heavier with energy, a rooftop billboard shows the spectrum |
 
 On top of the scenes there is VHS post-processing: RGB split on beats, tracking tears, noise,
 vignette and scanlines. In auto mode the player moves to the next scene on a beat every ~40 s.
@@ -35,7 +36,7 @@ vignette and scanlines. In auto mode the player moves to the next scene on a bea
 | N / P | next / previous track |
 | S | stop |
 | V / Tab | next visual (Shift: previous) |
-| 1–4 | pick a visual |
+| 1–5 | pick a visual |
 | A | auto-cycle visuals |
 | O / Shift+O | open files / folder |
 | L | playlist |
