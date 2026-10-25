@@ -35,6 +35,18 @@ def ask_paths(folder: bool = False) -> list[str]:
         root.destroy()
 
 
+def use_own_taskbar_identity():
+    """Without this, Windows groups the window under python.exe and shows Python's
+    icon in the taskbar instead of ours."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("vaporplayer.app")
+    except (AttributeError, OSError):
+        pass
+
+
 def make_icon() -> pygame.Surface:
     icon = pygame.Surface((32, 32), pygame.SRCALPHA)
     rows = gradient_lut([YELLOW, PINK, (200, 40, 190)], 32, cyclic=False)
@@ -49,6 +61,7 @@ def make_icon() -> pygame.Surface:
 
 class App:
     def __init__(self, paths: list[str]):
+        use_own_taskbar_identity()
         pygame.mixer.pre_init(44100, -16, 2, 1024)
         pygame.init()
         pygame.display.set_caption("VAPORPLAYER")
