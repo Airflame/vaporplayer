@@ -23,6 +23,7 @@ log spectrum, bass/mid/treble energy, spectral brightness and beat detection.
 | 4 | **LIQUID MEMORY** | Milkdrop-style feedback: waveform halo, stereo goniometer, a breathing wire globe, beat shockwaves                                                                                                                                                                             |
 | 5 | **DREAMPUNK** | rain-drenched neon city: neon colour follows the music's intensity (cold blue when calm, through violet and magenta, to hot pink and amber at peaks), signs pulse with their own band, rain and puddle ripples get heavier with energy, a rooftop billboard shows the spectrum |
 | 6 | **MALLSOFT** | a slow walk through an empty 80s/90s mall after closing, softened by bloom and ghosting: walking pace follows energy, each store's backlit sign glows with its own band, the SALE sign blinks on beats, fountain jets rise with the spectrum, skylight shafts and dust motes brighten with the music |
+| 7 | **SIGNALWAVE** | a CRT in a dark room surfing late-night channels (colour bars, weather, an infomercial, a station ident): quiet music means weak reception (snow, line wobble), beats tear the picture, roll the vertical hold and change channel; the weather's 5-day temperatures come from the spectrum |
 
 On top of the scenes there is VHS post-processing: RGB split on beats, tracking tears, noise,
 vignette and scanlines. In auto mode the player moves to the next scene on a beat every ~40 s.
@@ -37,7 +38,7 @@ vignette and scanlines. In auto mode the player moves to the next scene on a bea
 | N / P | next / previous track |
 | S | stop |
 | V / Tab | next visual (Shift: previous) |
-| 1–6 | pick a visual |
+| 1–7 | pick a visual |
 | A | auto-cycle visuals |
 | O / Shift+O | open files / folder |
 | L | playlist |
