@@ -1,6 +1,6 @@
 """Future funk: a city pop record sleeve come to life. A vinyl spins over a sunburst
-while a girl in headphones nods along in front of the skyline; colours cut on the bar,
-and everything moves on held frames like a looped 80s anime clip."""
+above the skyline; colours cut on the bar, and everything moves on held frames like a
+looped 80s anime clip."""
 from __future__ import annotations
 
 import math
@@ -23,9 +23,6 @@ CONFETTI = 26
 SPARKLES = 14
 INK = (28, 12, 56)    # the hard outline and drop shadow of a cel drawing
 VINYL = (22, 16, 34)
-SKIN = (255, 218, 196)
-HAIR = (58, 30, 110)
-BLUSH = (255, 150, 160)
 WORDS = ["ファンキー", "ディスコ", "ダンス", "グルーヴ", "恋", "真夜中", "フィーバー", "愛"]
 
 # (ray, alternate ray, skyline, accent, second accent)
@@ -36,27 +33,6 @@ PALETTES = [
     ((165, 95, 255), (205, 150, 255), (40, 20, 120), (90, 255, 190), (255, 130, 190)),
     ((255, 120, 90), (255, 175, 130), (120, 20, 110), (120, 245, 235), (255, 240, 120)),
 ]
-
-# the girl, in head radii around the middle of her head, x towards the record, y up
-FACE = [(0.74, 0.5), (0.8, 0.22), (0.84, 0.06), (1.04, -0.16), (0.88, -0.27), (0.92, -0.38), (0.84, -0.45),
-        (0.88, -0.56), (0.72, -0.82), (0.3, -0.96), (-0.3, -0.8), (-0.8, -0.2), (-0.8, 0.5), (0.0, 1.0)]
-NECK = [(0.3, -0.8), (0.26, -1.8), (-0.4, -1.8), (-0.4, -0.65)]
-JACKET = [(0.26, -1.35), (0.95, -1.8), (1.4, -2.4), (1.55, -4.5), (-1.75, -4.5), (-1.55, -2.4), (-1.0, -1.8),
-          (-0.4, -1.38), (-0.05, -1.62)]
-HAIR_CAP = [(0.82, 0.42), (0.6, 0.86), (0.1, 1.12), (-0.5, 1.02), (-0.98, 0.5), (-1.02, -0.2), (-0.6, -0.86),
-            (-0.1, -0.55), (0.02, 0.22), (0.3, 0.3), (0.42, 0.14), (0.58, 0.34)]
-HAIR_LENGTH = 9       # points along each edge of the hair blowing out behind her
-HEADBAND = [(-0.2 + math.sin(rise * math.pi) * 0.14, -0.06 + rise * 1.26) for rise in np.linspace(0.0, 1.0, 10)]
-EAR_CUP = (-0.2, -0.06)
-EYELASH = [(0.36, -0.02), (0.5, -0.09), (0.66, -0.03)]
-MOUTH = [(0.62, -0.5), (0.76, -0.47)]
-CHEEK = (0.36, -0.3)
-
-
-def _rotated(points, angle, scale, origin):
-    cosine, sine = math.cos(angle), math.sin(angle)
-    return [(origin[0] + (x * cosine - y * sine) * scale, origin[1] - (x * sine + y * cosine) * scale)
-            for x, y in points]
 
 
 class FutureFunk(Scene):
@@ -79,7 +55,7 @@ class FutureFunk(Scene):
         width, height = size
         self._canvas = pygame.Surface((max(2, width // 2), max(2, height // 2)))
         canvas_w, canvas_h = self._canvas.get_size()
-        self._center = (canvas_w * 0.6, canvas_h * 0.46)
+        self._center = (canvas_w * 0.5, canvas_h * 0.46)
         self._radius = min(canvas_w * 0.22, canvas_h * 0.3)
         self._record = self._press_record(int(self._radius * 2))
         self._halftone = self._print_halftone((canvas_w, canvas_h))
@@ -206,7 +182,6 @@ class FutureFunk(Scene):
         self._draw_spectrum_ring(canvas, features, center, radius, accent, second_accent)
         self._draw_record(canvas, center, radius)
         self._draw_skyline(canvas, palette_index, features, accent)
-        self._draw_girl(canvas, features, now, accent, second_accent)
         self._draw_word(canvas, features)
         self._draw_sparkles(canvas, features, now)
 
@@ -296,46 +271,6 @@ class FutureFunk(Scene):
                 across = math.sin(step * 1.6) * unit * 0.5
                 squiggle.append((x + along * cosine - across * sine, y + along * sine + across * cosine))
             pygame.draw.lines(canvas, color, False, squiggle, max(2, int(unit * 0.3)))
-
-    def _draw_girl(self, canvas, features, now, accent, second_accent):
-        canvas_w, canvas_h = canvas.get_size()
-        scale = canvas_h * 0.15
-        nod = features.beat_pulse ** 2
-        origin = (canvas_w * 0.16, canvas_h * 0.58 + nod * scale * 0.08)
-        tilt = 0.14 - nod * 0.2  # chin up towards the record, dropping on the beat
-
-        def outlined(points, color):
-            pygame.draw.polygon(canvas, color, points)
-            pygame.draw.polygon(canvas, INK, points, 2)
-
-        def on_head(points):
-            return _rotated(points, tilt, scale, origin)
-
-        def on_body(points):
-            return [(origin[0] + x * scale, origin[1] - y * scale) for x, y in points]
-
-        wind = 0.5 + features.energy
-        upper_edge, lower_edge = [], []
-        for step in range(1, HAIR_LENGTH + 1):
-            progress = step / HAIR_LENGTH
-            wave = math.sin(now * 4 - progress * 4.5) * 0.28 * progress * wind
-            upper_edge.append((-0.9 - progress * (0.7 + 0.8 * wind), 0.55 - progress * 2.2 + wave))
-            lower_edge.append((-0.4 - progress * (0.7 + 0.75 * wind), -0.5 - progress * 1.5 + wave * 1.2))
-
-        outlined(on_head([(-0.2, 1.0), *upper_edge, *reversed(lower_edge), (-0.2, -0.7)]), HAIR)
-        outlined(on_body(NECK), scale_color(SKIN, 0.85))
-        outlined(on_body(JACKET), second_accent)
-        outlined(on_head(FACE), SKIN)
-        pygame.draw.circle(canvas, BLUSH, on_head([CHEEK])[0], scale * 0.11)
-        pygame.draw.lines(canvas, INK, False, on_head(EYELASH), max(2, int(scale * 0.05)))
-        pygame.draw.lines(canvas, INK, False, on_head(MOUTH), 2)
-        outlined(on_head(HAIR_CAP), HAIR)
-
-        pygame.draw.lines(canvas, accent, False, on_head(HEADBAND), max(2, int(scale * 0.1)))
-        cup = on_head([EAR_CUP])[0]
-        pygame.draw.circle(canvas, accent, cup, scale * 0.3)
-        pygame.draw.circle(canvas, INK, cup, scale * 0.3, 2)
-        pygame.draw.circle(canvas, second_accent, cup, scale * (0.1 + 0.08 * features.bass))
 
     def _draw_word(self, canvas, features):
         if features.beat_pulse < 0.2 or features.beat_count % 2:
