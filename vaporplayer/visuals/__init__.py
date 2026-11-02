@@ -19,7 +19,7 @@ __all__ = ["VisualEngine", "PostFX"]
 
 class VisualEngine:
     AUTO_INTERVAL = 40.0  # seconds before auto mode moves on (on the next beat)
-    FADE_TIME = 1.4
+    FADE_TIME = 0.7
 
     def __init__(self):
         self.scenes = [SunsetGrid(), Kaleidoscope(), Tunnel(), LiquidMemory(), Dreampunk(), Mallsoft(), Signalwave(),
