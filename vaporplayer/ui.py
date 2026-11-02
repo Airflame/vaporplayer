@@ -15,7 +15,7 @@ HELP_LINES = [
     ("N / P", "next / previous track"),
     ("S", "stop"),
     ("V / TAB", "next visual  (+SHIFT: previous)"),
-    ("1 - 7", "pick a visual"),
+    ("1 - 8", "pick a visual"),
     ("A", "auto-cycle visuals on beats"),
     ("O / SHIFT+O", "open files / open folder"),
     ("L", "playlist"),
