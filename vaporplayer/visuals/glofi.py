@@ -23,8 +23,6 @@ SILHOUETTE = (34, 14, 44)
 WASHED_GRADE = (255, 232, 218)       # a warm, faded print
 GLINT = (255, 214, 150)
 FOAM = (120, 96, 92)
-STAMP_COLOR = (255, 168, 64)
-STAMP_FONTS = "consolas,lucidaconsole,couriernew,monospace"
 LEAK_COLORS = [(255, 110, 40), (255, 60, 130), (255, 196, 80)]
 FLARE_GHOSTS = [(0.45, 0.10, (70, 50, 40)), (0.85, 0.05, (40, 60, 70)), (1.15, 0.16, (50, 30, 60)),
                 (1.5, 0.07, (70, 60, 30)), (1.9, 0.24, (30, 26, 40))]  # (distance, size, colour)
@@ -69,13 +67,6 @@ class GloFi(Scene):
         self._leaks = [make_glow(atmosphere_h * 1.4, color, falloff=1.3) for color in LEAK_COLORS]
         self._ghosts = [make_glow(canvas_h * ghost_size, color, falloff=0.5)
                         for _, ghost_size, color in FLARE_GHOSTS]
-
-        font = pygame.font.SysFont(STAMP_FONTS, max(12, height // 24), bold=True)
-        stamp = font.render("JUL 14 1987", True, STAMP_COLOR)
-        shadow = font.render("JUL 14 1987", True, (40, 16, 8))
-        self._stamp = pygame.Surface((stamp.get_width() + 2, stamp.get_height() + 2), pygame.SRCALPHA)
-        self._stamp.blit(shadow, (2, 2))
-        self._stamp.blit(stamp, (0, 0))
 
     def _paint_backdrop(self, stops):
         sky_stops, sea_stops, sand_stops = stops
@@ -146,11 +137,6 @@ class GloFi(Scene):
         bloom_level = int((24 + 22 * features.energy) * duck)
         self._bloom.fill((bloom_level, bloom_level, bloom_level), special_flags=pygame.BLEND_RGB_MULT)
         surf.blit(self._bloom, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
-
-        width, height = self.size
-        margin = height // 18
-        surf.blit(self._stamp, (width - self._stamp.get_width() - margin * 1.6,
-                                height - self._stamp.get_height() - margin))
 
     def _draw_sun(self, canvas, sun_x, sun_y, sun_radius):
         canvas.set_clip(pygame.Rect(0, 0, canvas.get_width(), self._horizon))
