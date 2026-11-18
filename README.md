@@ -25,6 +25,7 @@ log spectrum, bass/mid/treble energy, spectral brightness and beat detection.
 | 6 | **MALLSOFT** | a slow walk through an empty 80s/90s mall after closing, softened by bloom and ghosting: walking pace follows energy, each store's backlit sign glows with its own band, the SALE sign blinks on beats, fountain jets rise with the spectrum, skylight shafts and dust motes brighten with the music |
 | 7 | **SIGNALWAVE** | a CRT in a dark room surfing late-night channels (colour bars, weather, an infomercial, a station ident): quiet music means weak reception (snow, line wobble), beats tear the picture, roll the vertical hold and change channel; the weather's 5-day temperatures come from the spectrum |
 | 8 | **FUTURE FUNK** | a city pop record sleeve come to life, animated on held frames like a looped 80s anime clip: a vinyl spins over a sunburst at a speed set by energy and gets scratched every 16 beats, the spectrum rings the record, the palette cuts every 8 beats, the skyline's windows light up per band, stickers pop in time and the camera punches in on beats |
+| 9 | **GLO-FI** | a faded summer memory on sun-bleached home video: a soft sun sinks into the sea between two palms, its glitter path on the water is the spectrum (treble at the horizon, bass up close), the sky warms from blue hour to golden hour with the music's intensity, swells roll in faster with energy and the tide washes up the sand with the bass, light leaks flare every 4 beats, the picture ducks on each kick like a sidechained pad, all washed out by ghosting, bloom and an overexposed, lifted grade |
 
 On top of the scenes there is VHS post-processing: RGB split on beats, tracking tears, noise,
 vignette and scanlines. In auto mode the player moves to the next scene on a beat every ~40 s.
@@ -39,7 +40,7 @@ vignette and scanlines. In auto mode the player moves to the next scene on a bea
 | N / P | next / previous track |
 | S | stop |
 | V / Tab | next visual (Shift: previous) |
-| 1–8 | pick a visual |
+| 1–9 | pick a visual |
 | A | auto-cycle visuals |
 | O / Shift+O | open files / folder |
 | L | playlist |

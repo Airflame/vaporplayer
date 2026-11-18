@@ -7,6 +7,7 @@ from ..palette import NIGHT, smoothstep
 from .dreampunk import Dreampunk
 from .feedback import LiquidMemory
 from .futurefunk import FutureFunk
+from .glofi import GloFi
 from .kaleido import Kaleidoscope
 from .mallsoft import Mallsoft
 from .postfx import PostFX
@@ -23,7 +24,7 @@ class VisualEngine:
 
     def __init__(self):
         self.scenes = [SunsetGrid(), Kaleidoscope(), Tunnel(), LiquidMemory(), Dreampunk(), Mallsoft(), Signalwave(),
-                       FutureFunk()]
+                       FutureFunk(), GloFi()]
         self.index = 0
         self.auto = True
         self.on_switch = None
